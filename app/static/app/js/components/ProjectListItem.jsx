@@ -3,7 +3,6 @@ import React from 'react';
 import update from 'immutability-helper';
 import TaskList from './TaskList';
 import NewTaskPanel from './NewTaskPanel';
-import ImportTaskPanel from './ImportTaskPanel';
 import UploadProgressBar from './UploadProgressBar';
 import ProgressBar from './ProgressBar';
 import ErrorMessage from './ErrorMessage';
@@ -33,8 +32,7 @@ class ProjectListItem extends React.Component {
       upload: this.getDefaultUploadState(),
       error: "",
       data: props.data,
-      refreshing: false,
-      importing: false
+      refreshing: false
     };
 
     this.toggleTaskList = this.toggleTaskList.bind(this);
@@ -204,7 +202,13 @@ class ProjectListItem extends React.Component {
               let response = JSON.parse(files[0].xhr.response);
               if (!response.id) throw new Error(`Expected id field, but none given (${response})`);
               
-              this.newTaskAdded();
+              if (this.state.showTaskList){
+                this.taskList.refresh();
+              }else{
+                this.setState({showTaskList: true});
+              }
+              this.resetUploadState();
+              this.refresh();
             }catch(e){
               this.setUploadState({error: `Invalid response from server: ${e.message}`, uploading: false})
             }
@@ -239,18 +243,6 @@ class ProjectListItem extends React.Component {
           }
         });
     }
-  }
-
-  newTaskAdded = () => {
-    this.setState({importing: false});
-    
-    if (this.state.showTaskList){
-      this.taskList.refresh();
-    }else{
-      this.setState({showTaskList: true});
-    }
-    this.resetUploadState();
-    this.refresh();
   }
 
   setRef(prop){
@@ -343,14 +335,6 @@ class ProjectListItem extends React.Component {
     location.href = `/map/project/${this.state.data.id}/`;
   }
 
-  handleImportTask = () => {
-    this.setState({importing: true});
-  }
-
-  handleCancelImportTask = () => {
-    this.setState({importing: false});
-  }
-
   render() {
     const { refreshing, data } = this.state;
     const numTasks = data.tasks.length;
@@ -377,17 +361,13 @@ class ProjectListItem extends React.Component {
           <ErrorMessage bind={[this, 'error']} />
           <div className="btn-group pull-right">
             {this.hasPermission("add") ? 
-              <div className={"asset-download-buttons btn-group " + (this.state.upload.uploading ? "hide" : "")}>
-                <button type="button" 
-                      className="btn btn-primary btn-sm"
+              <button type="button" 
+                      className={"btn btn-primary btn-sm " + (this.state.upload.uploading ? "hide" : "")} 
                       onClick={this.handleUpload}
                       ref={this.setRef("uploadButton")}>
                 <i className="glyphicon glyphicon-upload"></i>
                 Select Images and GCP
-              </button><button type="button" className="btn btn-sm dropdown-toggle btn-primary" data-toggle="dropdown"><span className="caret"></span></button>
-              <ul className="dropdown-menu">
-                <li><a href="javascript:void(0);" onClick={this.handleImportTask}><i className="glyphicon glyphicon-import"></i> Import Existing Assets</a></li>
-             </ul></div>
+              </button>
             : ""}
 
             <button disabled={this.state.upload.error !== ""} 
@@ -435,6 +415,10 @@ class ProjectListItem extends React.Component {
             /> 
           : ""}
 
+          {this.state.upload.uploading || this.state.upload.resizing ? 
+            <i className="fa fa-refresh fa-spin fa-fw" />
+            : ""}
+          
           {this.state.upload.error !== "" ? 
             <div className="alert alert-warning alert-dismissible">
                 <button type="button" className="close" aria-label="Close" onClick={this.closeUploadError}><span aria-hidden="true">&times;</span></button>
@@ -449,14 +433,6 @@ class ProjectListItem extends React.Component {
               filesCount={this.state.upload.totalCount}
               showResize={true}
               getFiles={() => this.state.upload.files }
-            />
-          : ""}
-
-          {this.state.importing ? 
-            <ImportTaskPanel
-              onImported={this.newTaskAdded}
-              onCancel={this.handleCancelImportTask}
-              projectId={this.state.data.id}
             />
           : ""}
 

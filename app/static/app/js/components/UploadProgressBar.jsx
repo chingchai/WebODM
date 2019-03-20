@@ -1,4 +1,3 @@
-import '../css/UploadProgressBar.scss';
 import React from 'react';
 import PropTypes from 'prop-types';
 
@@ -35,13 +34,13 @@ class UploadProgressBar extends React.Component {
                 `${this.props.totalCount} files uploaded successfully`;
 
     return (
-      <div className="upload-progress-bar">
+      <div>
         <div className="progress">
           <div className={'progress-bar progress-bar-success progress-bar-striped ' + active} style={{width: percentage + '%'}}>
             {percentage}%
           </div>
         </div>
-        <div className="text-left small upload-label">
+        <div className="text-left small">
           {label}
         </div>
       </div>

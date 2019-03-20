@@ -30,9 +30,10 @@ A free, user-friendly, extendable application and [API](http://docs.webodm.org) 
  * [Run it natively](#run-it-natively)
  * [Run it on the cloud (Google Compute, Amazon AWS)](#run-it-on-the-cloud-google-compute-amazon-aws)
  
-![ezgif-1-c81c8daab2e0](https://user-images.githubusercontent.com/1951843/52976882-3db81d80-3399-11e9-8915-ffb00b062aaf.gif)
 
-![ezgif-1-4d8402e295f9](https://user-images.githubusercontent.com/1951843/52976888-43adfe80-3399-11e9-8bc6-1690806131d1.gif)
+![Alt text](https://user-images.githubusercontent.com/1951843/28586405-af18e8cc-7141-11e7-9853-a7feca7c9c6b.gif)
+
+![Alt text](/screenshots/pointcloud.png?raw=true "3D Display")
 
 
 ## Getting Started
@@ -264,12 +265,25 @@ Developer, I'm looking to build an app that displays map results and takes care 
 Developer, I'm looking to build an app that will stay behind a firewall and just needs raw results | [NodeODM](https://github.com/OpenDroneMap/NodeODM)
 
 ## Roadmap
+- [X] User Registration / Authentication
+- [X] UI mockup
+- [X] Task Processing
+- [X] 2D Map Display 
+- [X] 3D Model Display
+- [ ] NDVI display
+- [X] Volumetric Measurements
+- [X] Cluster management and setup.
+- [ ] Mission Planner
+- [X] Plugins/Webhooks System
+- [X] API
+- [X] Documentation
+- [ ] Android Mobile App
+- [ ] iOS Mobile App
+- [ ] Processing Nodes Volunteer Network
+- [X] Unit Testing
+- [X] SSL Support
 
-We follow a bottom-up approach to decide what new features are added to WebODM. User feedback guides us in the decision making process and we collect such feedback via [improvement requests](https://github.com/OpenDroneMap/WebODM/issues?q=is%3Aopen+is%3Aissue+label%3Aimprovements).
-
-Don't see a feature that you want? [Open a feature request](https://github.com/OpenDroneMap/WebODM/issues) or [help us build it](/CONTRIBUTING.md).
-
-Sometimes we also prioritize work that has received financial backing. If your organization is in the position to financially support the development of a particular feature, [get in touch](https://community.opendronemap.org) and we'll make it happen.
+Don't see a feature that you want? [Help us make it happen](/CONTRIBUTING.md). 
 
 ## Getting Help
 
@@ -290,7 +304,7 @@ There are many ways to contribute back to the project:
  - ⭐️ us on GitHub.
  - Spread the word about WebODM and OpenDroneMap on social media.
  - While we don't accept donations, you can purchase an [installer](https://webodm.org/download#installer) or a [premium support package](https://webodm.org/services#premium-support).
- - Become a contributor 🤘
+ - Become a contributor (see below to get free swag 🤘)
 
 ## Become a Contributor
 
@@ -300,9 +314,13 @@ You don't necessarily need to be a developer to become a contributor. We can use
 
 If you know how to code, we primarily use Python (Django), Javascript (React), HTML and SCSS. See the [Development Quickstart](http://docs.webodm.org/#development-quickstart) and [Contributing](/CONTRIBUTING.md) documents for more information.
 
-To make a contribution, you will need to open a pull request ([here's how](https://github.com/Roshanjossey/first-contributions#fork-this-repository)). To make changes to WebODM, make a clone of the repository and run `./webodm.sh start --dev`.
+To make a contribution, you will need to open a pull request ([here's how](https://github.com/Roshanjossey/first-contributions#fork-this-repository)). To make changes to WebODM, make a clone of the repository and run `./devenv.sh start`.
 
 If you have questions visit us on the [forum](http://community.opendronemap.org/c/webodm) and we'll be happy to help you out with your first contribution.
+
+When your first pull request is accepted, don't forget to fill [this form](https://goo.gl/forms/PZkiPPeNKUHNz0qe2) to get your **free** WebODM T-Shirt 🤘
+
+<img src="https://user-images.githubusercontent.com/1951843/36511023-344f86b2-1733-11e8-8cae-236645db407b.png" alt="T-Shirt" width="50%">
 
 ## Architecture Overview
 

@@ -22,7 +22,7 @@ Once you have a development environment, read about the [project overview](#proj
 
 Follow the [Getting Started](https://github.com/OpenDroneMap/WebODM#getting-started) instructions, then run:
 
-`./webodm.sh start --dev`
+`./devenv.sh start`
 
 That's it! You can modify any of the files, including SASS and React.js files. Changes will be reflected in the running WebODM instance automatically. 
 
@@ -36,7 +36,7 @@ We think testing is a necessary part of delivering robust software. We try to ac
 
 To run the unit tests, simply type:
 
-`./webodm.sh test`
+`./devenv.sh runtests`
 
 ## Project Overview
 
