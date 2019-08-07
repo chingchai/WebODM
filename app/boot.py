@@ -97,11 +97,9 @@ def boot():
 def add_default_presets():
     try:
         Preset.objects.update_or_create(name='Volume Analysis', system=True,
-                                        defaults={'options': [{'name': 'use-opensfm-dense', 'value': True},
-                                                              {'name': 'dsm', 'value': True},
+                                        defaults={'options': [{'name': 'dsm', 'value': True},
                                                               {'name': 'dem-resolution', 'value': '2'},
-                                                              {'name': 'depthmap-resolution', 'value': '1000'},
-                                                              {'name': 'opensfm-depthmap-min-patch-sd', 'value': '0'}]})
+                                                              {'name': 'depthmap-resolution', 'value': '1000'}]})
         Preset.objects.update_or_create(name='3D Model', system=True,
                                         defaults={'options': [{'name': 'mesh-octree-depth', 'value': "11"},
                                                               {'name': 'use-3dmesh', 'value': True},
@@ -113,12 +111,10 @@ def add_default_presets():
                                                               {'name': 'depthmap-resolution', 'value': '1000'},
                                                               {'name': 'texturing-nadir-weight', 'value': "28"}]})
         Preset.objects.update_or_create(name='Point of Interest', system=True,
-                                        defaults={'options': [{'name': 'matcher-neighbors', 'value': "24"},
-                                                              {'name': 'mesh-size', 'value': '600000'},
+                                        defaults={'options': [{'name': 'mesh-size', 'value': '600000'},
                                                               {'name': 'use-3dmesh', 'value': True}]})
         Preset.objects.update_or_create(name='Forest', system=True,
                                         defaults={'options': [{'name': 'min-num-features', 'value': "18000"},
-                                                              {'name': 'matcher-neighbors', 'value': "21"},
                                                               {'name': 'texturing-data-term', 'value': "area"}]})
         Preset.objects.update_or_create(name='DSM + DTM', system=True,
                                         defaults={
@@ -126,7 +122,8 @@ def add_default_presets():
         Preset.objects.update_or_create(name='Fast Orthophoto', system=True,
                                         defaults={'options': [{'name': 'fast-orthophoto', 'value': True}]})
         Preset.objects.update_or_create(name='High Resolution', system=True,
-                                        defaults={'options': [{'name': 'dsm', 'value': True},
+                                        defaults={'options': [{'name': 'ignore-gsd', 'value': True},
+                                                              {'name': 'dsm', 'value': True},
                                                               {'name': 'depthmap-resolution', 'value': '1000'},
                                                               {'name': 'dem-resolution', 'value': "2.0"},
                                                               {'name': 'orthophoto-resolution', 'value': "2.0"},

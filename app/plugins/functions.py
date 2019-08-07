@@ -2,6 +2,7 @@ import os
 import logging
 import importlib
 import subprocess
+import traceback
 
 import django
 import json
@@ -13,11 +14,15 @@ from django.http import HttpResponse
 
 from app.models import Plugin
 from app.models import Setting
-from webodm import settings
+from django.conf import settings
 
 logger = logging.getLogger('app.logger')
 
 def init_plugins():
+    # Make sure app/media/plugins exists
+    if not os.path.exists(get_plugins_persistent_path()):
+        os.mkdir(get_plugins_persistent_path())
+
     build_plugins()
     sync_plugin_db()
     register_plugins()
@@ -27,10 +32,10 @@ def sync_plugin_db():
     Creates db entries for undiscovered plugins to keep track
     of enabled/disabled plugins
     """
+    if settings.MIGRATING: return
 
     # Erase cache
-    global plugins
-    plugins = None
+    clear_plugins_cache()
 
     db_plugins = Plugin.objects.all()
     fs_plugins = get_plugins()
@@ -47,13 +52,18 @@ def sync_plugin_db():
         # Plugins that have a "disabled" file are disabled
         disabled_path = plugin.get_path("disabled")
         disabled =  os.path.isfile(disabled_path)
-        if not disabled:
-            _, created = Plugin.objects.get_or_create(
-                name=plugin.get_name(),
-                defaults={'enabled': not disabled},
-            )
-            if created:
-                logger.info("Added [{}] plugin to database".format(plugin.get_name()))
+
+        _, created = Plugin.objects.get_or_create(
+            name=plugin.get_name(),
+            defaults={'enabled': not disabled},
+        )
+        if created:
+            logger.info("Added [{}] plugin to database".format(plugin.get_name()))
+
+
+def clear_plugins_cache():
+    global plugins
+    plugins = None
 
 
 def build_plugins():
@@ -89,15 +99,23 @@ def build_plugins():
                     "Cannot generate webpack.config.js for {}, a path is missing: {}".format(plugin, ' '.join(build_paths)))
 
         # Check for webpack.config.js (if we need to build it)
-        if plugin.path_exists("public/webpack.config.js") and not plugin.path_exists("public/build"):
-            logger.info("Running webpack for {}".format(plugin.get_name()))
-            subprocess.call(['webpack-cli'], cwd=plugin.get_path("public"))
+        if plugin.path_exists("public/webpack.config.js"):
+            if settings.DEV:
+                logger.info("Running webpack with watcher for {}".format(plugin.get_name()))
+                subprocess.Popen(['webpack-cli', '--watch'], cwd=plugin.get_path("public"))
+            elif not plugin.path_exists("public/build"):
+                logger.info("Running webpack for {}".format(plugin.get_name()))
+                subprocess.call(['webpack-cli'], cwd=plugin.get_path("public"))
 
 
 def register_plugins():
     for plugin in get_active_plugins():
-        plugin.register()
-        logger.info("Registered {}".format(plugin))
+        try:
+            plugin.register()
+            logger.info("Registered {}".format(plugin))
+        except Exception as e:
+            disable_plugin(plugin.get_name())
+            logger.warning("Cannot register {}: {}".format(plugin, str(e)))
 
 
 def get_app_url_patterns():
@@ -106,7 +124,7 @@ def get_app_url_patterns():
         each mount point
     """
     url_patterns = []
-    for plugin in get_active_plugins():
+    for plugin in get_plugins():
         for mount_point in plugin.app_mount_points():
             url_patterns.append(url('^plugins/{}/{}'.format(plugin.get_name(), mount_point.url),
                                 mount_point.view,
@@ -125,7 +143,7 @@ def get_api_url_patterns():
     @return the patterns to expose the plugin API mount points (if any)
     """
     url_patterns = []
-    for plugin in get_active_plugins():
+    for plugin in get_plugins():
         for mount_point in plugin.api_mount_points():
             url_patterns.append(url('^plugins/{}/{}'.format(plugin.get_name(), mount_point.url),
                                 mount_point.view,
@@ -189,6 +207,8 @@ def get_plugins():
 
 
 def get_active_plugins():
+    if settings.MIGRATING: return []
+
     plugins = []
     try:
         enabled_plugins = [p.name for p in Plugin.objects.filter(enabled=True).all()]
@@ -201,20 +221,44 @@ def get_active_plugins():
     return plugins
 
 
-def get_plugin_by_name(name, only_active=True):
+def get_plugin_by_name(name, only_active=True, refresh_cache_if_none=False):
     if only_active:
         plugins = get_active_plugins()
     else:
         plugins = get_plugins()
 
     res = list(filter(lambda p: p.get_name() == name, plugins))
-    return res[0] if res else None
+    res = res[0] if res else None
 
+    if refresh_cache_if_none and res is None:
+        # Retry after clearing the cache
+        clear_plugins_cache()
+        return get_plugin_by_name(name, only_active=only_active, refresh_cache_if_none=False)
+    else:
+        return res
+
+def get_current_plugin():
+    """
+    When called from a python module inside a plugin's directory,
+    it returns the plugin that this python module belongs to
+    :return: Plugin instance
+    """
+    caller_filename = traceback.extract_stack()[-2][0]
+
+    relp = os.path.relpath(caller_filename, get_plugins_path())
+    parts = relp.split(os.sep)
+    if len(parts) > 0:
+        plugin_name = parts[0]
+        return get_plugin_by_name(plugin_name, only_active=False)
+
+    return None
 
 def get_plugins_path():
     current_path = os.path.dirname(os.path.realpath(__file__))
     return os.path.abspath(os.path.join(current_path, "..", "..", "plugins"))
 
+def get_plugins_persistent_path(*paths):
+    return os.path.join(settings.MEDIA_ROOT, "plugins", *paths)
 
 def get_dynamic_script_handler(script_path, callback=None, **kwargs):
     def handleRequest(request):
@@ -234,10 +278,16 @@ def get_dynamic_script_handler(script_path, callback=None, **kwargs):
 
     return handleRequest
 
+def enable_plugin(plugin_name):
+    p = get_plugin_by_name(plugin_name, only_active=False)
+    p.register()
+    Plugin.objects.get(pk=plugin_name).enable()
+
+def disable_plugin(plugin_name):
+    Plugin.objects.get(pk=plugin_name).disable()
 
 def get_site_settings():
     return Setting.objects.first()
-
 
 def versionToInt(version):
     """

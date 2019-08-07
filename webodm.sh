@@ -77,6 +77,7 @@ case $key in
     ;;
     --dev)
     export WO_DEBUG=YES
+    export WO_DEV=YES
     dev_mode=true
     shift # past argument
     ;;
@@ -87,6 +88,10 @@ case $key in
     ;;
     --no-default-node)
     load_default_node=false
+    shift # past argument
+    ;;
+    --with-micmac)
+    load_micmac_node=true
     shift # past argument
     ;;
     *)    # unknown option
@@ -117,6 +122,7 @@ usage(){
   echo "	--hostname	<hostname>	Set the hostname that WebODM will be accessible from (default: $DEFAULT_HOST)"
   echo "	--media-dir	<path>	Path where processing results will be stored to (default: $DEFAULT_MEDIA_DIR (docker named volume))"
   echo "	--no-default-node	Do not create a default NodeODM node attached to WebODM on startup (default: disabled)"
+  echo "	--with-micmac	Create a NodeMICMAC node attached to WebODM on startup. Experimental! (default: disabled)"
   echo "	--ssl	Enable SSL and automatically request and install a certificate from letsencrypt.org. (default: $DEFAULT_SSL)"
   echo "	--ssl-key	<path>	Manually specify a path to the private key file (.pem) to use with nginx to enable SSL (default: None)"
   echo "	--ssl-cert	<path>	Manually specify a path to the certificate file (.pem) to use with nginx to enable SSL (default: None)"
@@ -156,8 +162,6 @@ check_command(){
 environment_check(){
 	check_command "docker" "https://www.docker.com/"
 	check_command "git" "https://git-scm.com/downloads"
-	check_command "python" "https://www.python.org/downloads/"
-	check_command "pip" "Run \033[1msudo easy_install pip\033[0m" "easy_install pip"
 	check_command "docker-compose" "Run \033[1mpip install docker-compose\033[0m" "pip install docker-compose"
 }
 
@@ -192,6 +196,10 @@ start(){
 
     if [[ $load_default_node = true ]]; then
         command+=" -f docker-compose.nodeodm.yml"
+    fi
+
+    if [[ $load_micmac_node = true ]]; then
+        command+=" -f docker-compose.nodemicmac.yml"
     fi
 
     if [[ $dev_mode = true ]]; then
@@ -240,7 +248,7 @@ start(){
 }
 
 down(){
-	run "docker-compose -f docker-compose.yml -f docker-compose.nodeodm.yml down --remove-orphans"
+	run "docker-compose -f docker-compose.yml -f docker-compose.nodeodm.yml -f docker-compose.nodemicmac.yml down --remove-orphans"
 }
 
 rebuild(){
@@ -298,7 +306,7 @@ if [[ $1 = "start" ]]; then
 elif [[ $1 = "stop" ]]; then
 	environment_check
 	echo "Stopping WebODM..."
-	run "docker-compose -f docker-compose.yml -f docker-compose.nodeodm.yml stop"
+	run "docker-compose -f docker-compose.yml -f docker-compose.nodeodm.yml -f docker-compose.nodemicmac.yml stop"
 elif [[ $1 = "restart" ]]; then
 	environment_check
 	echo "Restarting WebODM..."
@@ -316,9 +324,19 @@ elif [[ $1 = "update" ]]; then
 	down
 	echo "Updating WebODM..."
 	run "git pull origin master"
-	run "docker pull opendronemap/nodeodm"
-	run "docker pull opendronemap/webodm_db"
-	run "docker pull opendronemap/webodm_webapp"
+
+	command="docker-compose -f docker-compose.yml"
+
+	if [[ $load_default_node = true ]]; then
+		command+=" -f docker-compose.nodeodm.yml"
+	fi
+
+	if [[ $load_micmac_node = true ]]; then
+		command+=" -f docker-compose.nodemicmac.yml"
+	fi
+
+	command+=" pull"
+	run "$command"
 	echo -e "\033[1mDone!\033[0m You can now start WebODM by running $0 start"
 elif [[ $1 = "checkenv" ]]; then
 	environment_check
