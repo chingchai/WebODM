@@ -20,7 +20,7 @@ djangorestframework-guardian==0.3.0
 drf-nested-routers==0.11.1
 funcsigs==1.0.2
 futures==3.1.1
-gunicorn==19.8.0
+gunicorn==23.0.0
 geodeep==0.9.8
 itypes==1.1.0
 kombu==4.6.7
@@ -64,3 +64,4 @@ pyopenssl==19.1.0 ; sys_platform == "win32"
 numpy==1.26.2
 scipy==1.11.3
 drf-yasg==1.20.0
+zipstream-ng==1.8.0
